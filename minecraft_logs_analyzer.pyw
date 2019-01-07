@@ -152,7 +152,6 @@ def iter_logs(path):
 
 def count_playtime(path, count=-1, print_files='file'):
     global graph_data_collection,stop_scan,total_data_time,data_total_play_time
-    last_delta = 0
     current_month = ""
     total_data_time = 0
     time_pattern = re.compile(
@@ -179,8 +178,13 @@ def count_playtime(path, count=-1, print_files='file'):
             # Not a recognized chat log
             continue
         except EOFError:
-            insert('Error: {} may be corrupted -- skipping'.format(Path(log.name).name),error=True)
+            insert('ERROR: {} may be corrupted -- skipping'.format(Path(log.name).name))
             continue
+        except OSError:
+            insert('ERROR: {} may be corrupted or is not gzipped -- skipping'.format(Path(log.name).name))
+            continue
+        except:
+            insert('ERROR: An error occured while scanning file {} -- skiping')
         start_time = timedelta(
             hours=int(start_time['hour']),
             minutes=int(start_time['min']),
@@ -301,7 +305,7 @@ def run():
     graph_data_collection = {}
     insert("Starting log scanning...")
     if scan_mode == 0: # no input clicked yet
-        insert("No mode selected, please select mode!",error=True)
+        insert("No mode selected, please select mode!")
         return
     elif scan_mode == 1:
         default_logs_path = Path('C:/Users', os.getlogin(),
@@ -312,14 +316,14 @@ def run():
             return
         # say that it did not exist
         else:
-            insert("Error: Could not automatically locate your .minecraft/logs folder",error=True)
+            insert("ERROR: Could not automatically locate your .minecraft/logs folder")
 
     elif scan_mode == 2: # files
         paths_list = pathInput.get().split("|")
         for path in paths_list:
             path = Path(path)
             if path.exists() == False:
-                insert("Error: One of your specified paths does not exit:", error=True)
+                insert("ERROR: One of your specified paths does not exit:")
                 insert(path, error=True)
                 return
         paths_list_ready = [Path(path) for path in paths_list]
@@ -334,7 +338,7 @@ def run():
                 glob_list.append(Path(paths))
         for path in glob_list:
             if path.exists() == False:
-                insert("One of your specified paths does not exit:", error=True)
+                insert("ERROR: One of your specified paths does not exit:")
                 insert(str(path), error=True)
                 return
 
@@ -343,7 +347,7 @@ def run():
 def exit():
     global stop_scan
     stop_scan = True
-    insert("Stopping scan...", error=True)
+    insert("Stopping scan...")
     return
 
 
