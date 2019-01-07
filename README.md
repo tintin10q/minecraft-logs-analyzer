@@ -13,7 +13,7 @@ C:/Users/USER/AppData/Roaming/.minecraft/logs
 2: With this mode you can enter your own file paths
 Separate multiple paths with pipes (vertical bar: | ).
 
-3: With glob you can enter a glob to select multiple folders in a directory
+3: With glob you can enter a glob to select multiple folders in a directory,
 Glob will basicly select your path but also all the paths of any subdirectories that might exist in your spicified path and that match the glob
 Separate multiple globs with pipes (vertical bar: | ). Make sure files don't overlap
 
