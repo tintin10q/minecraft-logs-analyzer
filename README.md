@@ -30,6 +30,12 @@ You can read more about globs here: https://pymotw.com/3/glob/
 
 This is how it all looks: https://imgur.com/a/ZuV0CCW
 
+Results
+--------------
+You can export the results into 2 ways
+- A graph with hours per month
+- A csv file with hours per session
+
 This next part is only for those who use the .pyw version
 -----------------------------------------------------------------------------------------------
 Atleast python 3.6 is required for this program to work it might work on python 3.5 but I have not tested that
