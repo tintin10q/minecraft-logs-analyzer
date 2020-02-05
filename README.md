@@ -40,6 +40,8 @@ This next part is only for those who use the .pyw version
 -----------------------------------------------------------------------------------------------
 Atleast python 3.6 is required for this program to work it might work on python 3.5 but I have not tested that
 
+(I now added python 3.7 and 3.8 support)
+
 This program uses matplotlib pyplot to create graphs. If you do not have matplotlib installed please install it by entering the flowing command into the cmd:
 pip install matplotlib
 
