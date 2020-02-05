@@ -51,7 +51,7 @@ pip install matplotlib
 If that does not work try to reinstall python and make sure to click the install pip option
 
 The program will also detect if you do not have matplotlib installed and it will ask you if you want to auto install
-This will basicly run os.system("pip install matplotlib") this is about the same as running "pip install matplotlib" in the cmd
+This will basicly run os.system("pip install --user matplotlib") this is about the same as running "pip install matplotlib" in the cmd
 -----------------------------------------------------------------------------------------------
 ''')
 
@@ -68,6 +68,7 @@ import gzip
 import os
 from pathlib import Path
 import re
+re._pattern_type = re.Pattern
 from _thread import start_new_thread
 # I import matplotlib in the module_not_found if it is not found otherwise in the matplotlib when building the gui we will see how that goes
 
@@ -176,8 +177,9 @@ def count_playtime(path, count=-1, print_files='file'):
             start_time = time_pattern.match(log.readline()).groupdict()
             end_time = time_pattern.match(
                     read_backward_until(log, time_pattern_simple)).groupdict()
-        except AttributeError:
+        except AttributeError as e:
             # Not a recognized chat log
+            insert("ERROR: {} generated this error: {}".format(Path(log.name).name,e))
             continue
         except EOFError:
             insert('ERROR: {} may be corrupted -- skipping'.format(Path(log.name).name))
@@ -318,6 +320,7 @@ def run():
                                  'AppData/Roaming/.minecraft', 'logs')
 
         if default_logs_path.exists():
+
             start_new_thread(count_playtimes_tread, tuple(), {"paths": default_logs_path, "mode": scan_mode})
             return
         # say that it did not exist
@@ -382,7 +385,7 @@ def module_not_found():
     global plt
     if messagebox.askokcancel("Could not import Matplotlib module",'It looks like you do not have the matplotlib module installed\nWithout this module you can not make graphs\nInputing *pip install matplotlib* into the cmd will install it\n\nYou can also auto install by clicking ok'):
         insert("Attempting to install matplotlib...")
-        os.system("pip install matplotlib")
+        os.system("pip install --user matplotlib")
     try:
         from matplotlib import pyplot as plt
         insert("Succesfully installed matplotlib!")
