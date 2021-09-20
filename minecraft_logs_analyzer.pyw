@@ -321,6 +321,7 @@ def create_graph():
 			return
 		data_list_dates = [dates for dates in graph_data_collection]
 		data_list_hour = [hours[1] for hours in graph_data_collection.items()]
+		data_list_dates, data_list_hour = zip(*sorted(zip(data_list_dates, data_list_hour)))
 		plt.bar(data_list_dates, data_list_hour, color=graph_color)
 		
 		plt.xticks(rotation='vertical')
