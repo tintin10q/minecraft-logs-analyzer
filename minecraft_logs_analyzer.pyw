@@ -1,14 +1,14 @@
 import gzip
 import os
 import re
+import tkinter.scrolledtext as tkst
+import tkinter.ttk as ttk
 from csv import writer as csv_writher
 from datetime import timedelta
 from glob import iglob
 from io import TextIOBase, SEEK_END
 from pathlib import Path
-
-import tkinter.scrolledtext as tkst
-import tkinter.ttk as ttk
+from sys import platform
 from tkinter import Tk, Entry, Button, StringVar, Frame, IntVar, Message, messagebox, END, filedialog
 from tkinter.colorchooser import *
 
@@ -19,6 +19,25 @@ try:
 	import pyi_splash
 except ModuleNotFoundError:
 	print("Failed to display a splash screen.")
+
+if platform == "linux" or platform == "linux2":
+	auto_path = Path("$HOME/.minecraft")
+
+elif platform == "darwin":
+	auto_path = Path("$HOME/Library/Application Support/minecraft")
+
+elif platform == "win32":
+	auto_path = Path('C:/Users', os.getlogin(), 'AppData/Roaming/.minecraft')
+else:
+	print("Could not determine platform guessing path")
+	from random import randint
+	
+	auto_path = [
+		Path("$HOME/.minecraft"),
+		Path("$HOME/Library/Application Support/minecraft"),
+		Path('C:/Users', os.getlogin(), 'AppData/Roaming/.minecraft'),
+	][randint(0, 2)]
+
 
 # I import matplotlib in the module_not_found if it is not found otherwise in the matplotlib when building the gui we will see how that goes
 
@@ -81,7 +100,21 @@ def read_backward_until(stream, delimiter, buf_size=32, stop_after=1, trim_start
 
 
 def read_last_line(stream):
-	return read_backward_until(stream, os.linesep, stop_after=2, trim_start=2)
+	one = stream.readline()
+	two = stream.readline()
+	if not two:  # Handle one line file case
+		return read_first_line(stream)
+	last_line = read_backward_until(stream, os.linesep, stop_after=2, trim_start=2)
+	stream.seek(0)
+	return last_line
+
+
+def read_first_line(stream):
+	# return read_backward_until(stream, os.linesep, stop_after=2, trim_start=2)
+	stream.seek(0)
+	first_line = stream.readline()
+	stream.seek(0)
+	return first_line
 
 
 def iter_logs(path):
@@ -104,16 +137,19 @@ def count_playtime(path, count=-1, print_files='file'):
 	global graph_data_collection, stop_scan, total_data_time, data_total_play_time, csv_data
 	current_month = ""
 	total_data_time = 0
-	time_pattern = re.compile(
-		r'\[(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})\]', re.I
-	)
-	time_pattern_simple = re.compile(r'\d{2}:\d{2}:\d{2}')
+	time_pattern = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})', re.I)
+	# time_pattern_simple = re.compile(r'\d{2}:\d{2}:\d{2}')
 	total_time = timedelta()
 	
 	for log in iter_logs(path):
+		if print_files == 'file':
+			filename = Path(log.name).name
+		else:
+			filename = log.name
+		
 		if stop_scan:
 			stop_scan = False
-			insert("\nTotal Time:" + " " + str(total_time))
+			insert(f"\nTotal Time: {total_time}")
 			data_total_play_time = total_time
 			return
 		if count == 0:
@@ -121,21 +157,27 @@ def count_playtime(path, count=-1, print_files='file'):
 		count -= 1
 		
 		try:
-			start_time = time_pattern.match(log.readline()).groupdict()
-			end_time = time_pattern.match(
-				read_backward_until(log, time_pattern_simple)).groupdict()
+			first_line = read_first_line(log)
+			last_line = read_last_line(log)
+			start_time = time_pattern.search(first_line).groupdict()
+			end_time = time_pattern.search(last_line).groupdict()
 		except AttributeError as e:
 			# Not a recognized chat log
-			insert("ERROR: {} generated this error: {}".format(Path(log.name).name, e))
+			insert(f"ERROR: {filename} logs could not be parsed. Could be log from modded client that uses different logging format.")
 			continue
 		except EOFError:
-			insert('ERROR: {} may be corrupted -- skipping'.format(Path(log.name).name))
+			insert(f'ERROR: {filename} may be corrupted -- skipping')
 			continue
 		except OSError:
-			insert('ERROR: {} may be corrupted or is not gzipped -- skipping'.format(Path(log.name).name))
+			insert(f'ERROR: {filename} may be corrupted or is not gzipped -- skipping')
 			continue
-		except:
-			insert('ERROR: An error occured while scanning file {} -- skiping')
+		except ValueError as E:
+			insert(f"Couldn't open {filename} as log ({E}) -- skipping")
+			continue
+		except Exception as E:
+			insert(f'An error occurred with {filename} - {E} -- skipping')
+			continue
+		
 		start_time = timedelta(
 			hours=int(start_time['hour']),
 			minutes=int(start_time['min']),
@@ -151,9 +193,9 @@ def count_playtime(path, count=-1, print_files='file'):
 		delta = end_time - start_time
 		total_time += delta
 		if print_files == 'full':
-			insert(str(log.name) + " " + str(delta))
+			insert(f"{log.name} {delta}")
 		elif print_files == 'file':
-			insert(str(Path(log.name).name) + " " + str(delta))
+			insert(f"{Path(log.name).name} {delta}")
 		# collect data for csv
 		csv_data[str(Path(log.name).name)[:12]] = str(delta)
 		
@@ -174,58 +216,24 @@ def count_playtime(path, count=-1, print_files='file'):
 	return total_time
 
 
-def search_logs(pattern, return_after=-1, output_file=None):
-	# if sub is not None:
-	#     pattern =   r'(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})\S+ ' \
-	#               + r'\[(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})\] ' \
-	#               + r'\[(?P<caller>[\w ]+?/)(?P<level>[A-Z]+)\]: ' \
-	#               + pattern
-	pattern = re.compile(pattern, flags=re.I)
-	
-	try:
-		out = None
-		if output_file:
-			out = open(output_file, 'wt', encoding='utf_8')
-		
-		for log in iter_logs():
-			for line in log:
-				search = re.search(pattern, line)
-				if search:
-					return_after -= 1
-					# Set what will be output
-					if pattern.groups != 0:
-						# There is a capturing group in the pattern regex;
-						# use the first one available
-						to_output = search.group(1)
-					else:
-						to_output = line
-					
-					if out:
-						# Write to file
-						out.write(to_output)
-					else:
-						insert(str(to_output))
-				
-				if return_after == 0:
-					return
-	finally:
-		if out:
-			out.close()
-
-
-def insert(string_input, newline=True, error=False, scroll=True):  # to get text to output field
+def insert(string_input, end="\n", scream=False, scroll=True):  # to get text to output field
+	"""
+	Insert text into the outputbox of the gui
+	:param string_input: The text to display
+	:param end: What to put at the end of the text
+	:param scream: Make the text uppercase
+	:param scroll: Scroll to the bottom of the text box
+	"""
 	string_input = str(string_input)
-	if error == True:
+	if scream:
 		text.insert(END, "** ")
 		text.insert(END, string_input.upper())
 		text.insert(END, " **")
-	if error == False:
+	else:
 		text.insert(END, string_input)
-	if newline == True:
-		text.insert(END, "\n")
+	text.insert(END, end)
 	if scroll:
 		text.see(END)
-	return
 
 
 def change_mode():
@@ -235,7 +243,7 @@ def change_mode():
 		pathInput.config(state='disabled', cursor="arrow")
 	else:
 		pathInput.config(state='normal', cursor="hand2")
-	insert("Changed mode to " + mode_dict[scan_mode])
+	insert(f"Changed mode to {mode_dict[scan_mode]}")
 
 
 # probably put path detect here
@@ -255,9 +263,9 @@ def count_playtimes_tread(paths, mode):
 			total_time += count_playtime(path, print_files='full' if len(paths) > 1 else 'file')
 	if mode == 3:
 		for path in paths:
-			if path.is_dir():
+			if Path(path).is_dir():
 				total_time += count_playtime(path, print_files='full')
-	insert("\nTotal Time:" + " " + str(total_time))
+	insert(f"\nTotal Time: {total_time}")
 	data_total_play_time = total_time
 
 
@@ -265,14 +273,14 @@ def run():
 	global graph_data_collection, csv_data
 	csv_data = {}
 	graph_data_collection = {}
-	insert("Starting log scanning...")
+	insert("Starting log scanning ...")
 	if scan_mode == 0:  # no input clicked yet
 		insert("No mode selected, please select mode!")
 		return
 	elif scan_mode == 1:
-		default_logs_path = Path('C:/Users', os.getlogin(), 'AppData/Roaming/.minecraft', 'logs')
+		default_logs_path = Path(auto_path, 'logs')
 		if default_logs_path.exists():
-			
+			insert(f"Automatically detected logs path: `{default_logs_path}` on {platform}.")
 			start_new_thread(count_playtimes_tread, tuple(), {"paths": default_logs_path, "mode": scan_mode})
 			return
 		# say that it did not exist
@@ -283,25 +291,25 @@ def run():
 		paths_list = pathInput.get().split("|")
 		for path in paths_list:
 			path = Path(path)
-			if path.exists() == False:
-				insert("ERROR: One of your specified paths does not exit:")
-				insert(path, error=True)
+			if not path.exists():
+				insert(f"ERROR: One of your specified paths does not exit: {path}")
 				return
 		paths_list_ready = [Path(path) for path in paths_list]
 		start_new_thread(count_playtimes_tread, tuple(), {"paths": paths_list_ready, "mode": scan_mode})
 	
-	
 	elif scan_mode == 3:  # glob
+		from itertools import chain
+		
+		insert("Finding glob paths. This can take a while if there are many paths.")
 		globs = pathInput.get().split("|")
-		glob_list = []
-		for _glob in globs:
-			for paths in iglob(_glob + "", recursive=True):
-				glob_list.append(Path(paths))
-		for path in glob_list:
-			if path.exists() == False:
-				insert("ERROR: One of your specified paths does not exit:")
-				insert(str(path), error=True)
-				return
+		if len(globs) > 1:
+			insert(f"You gave me {len(globs)} globs.")
+		iterator = ""
+		for index, _glob in enumerate(globs):
+			iterator = chain(iterator, iglob(_glob, recursive=True))
+			if len(globs) > 1:
+				insert(f"Completed search {index + 1}/{len(globs)}")
+		glob_list = iterator
 		
 		start_new_thread(count_playtimes_tread, tuple(), {"paths": glob_list, "mode": scan_mode})
 
@@ -332,7 +340,7 @@ def create_graph():
 		plt.draw()
 		plt.show()
 	except Exception as E:
-		insert("An error ocured while creating the graph: " + str(E), error=True)
+		insert(f"An error ocured while creating the graph: ({E})")
 		insert("Try closing and opening the program\nMake sure that you have matplotlib installed!")
 
 
@@ -364,6 +372,9 @@ def create_csv():
 	if len(csv_data) != 0:
 		filename = filedialog.asksaveasfilename(initialdir="/desktop", title="Save file:", initialfile="minecraft_playtime.csv",
 		                                        filetypes=(("csv files", "*.csv"), ("all files", "*.*")))
+		if not filename:
+			insert(f"No location save chosen")
+			return
 		with open(filename, newline='', mode="w+") as csvfile:
 			writer = csv_writher(csvfile, delimiter=',')
 			writer.writerow(["Day", "Hours"])
@@ -433,7 +444,7 @@ if __name__ == '__main__':
 	Message(frame, text="", bg=background_color).pack()
 	
 	# run button
-	submitButton = Button(frame, text="Run", command=run, cursor="hand2", bg=background_color, fg=fg_color, font="Helvetica 10")
+	submitButton = Button(frame, text="Run", command=lambda: start_new_thread(run, tuple()), cursor="hand2", bg=background_color, fg=fg_color, font="Helvetica 10")
 	submitButton.config(width=20)
 	submitButton.pack()
 	
@@ -467,7 +478,6 @@ if __name__ == '__main__':
 		root.iconbitmap("icon.ico")
 	else:
 		print("Could not find icon.ico so using default tkinter icon")
-	
 	
 	# Close the splash screen. It does not matter when the call
 	# to this function is made, the splash screen remains open until
