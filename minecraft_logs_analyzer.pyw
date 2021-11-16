@@ -484,7 +484,7 @@ if __name__ == '__main__':
 	# this function is called or the Python program is terminated.
 	try:
 		pyi_splash.close()
-	except:
+	except Exception:
 		pass
 	
 	root.mainloop()
