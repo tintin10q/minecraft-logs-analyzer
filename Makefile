@@ -11,5 +11,9 @@ minecraft_logs_analyzersmaller.exe:
 	rmdir dist
 	rm -rf build
 
+make install:
+	pip install -r requirements.txt
+	wget https://github.com/upx/upx/releases/download/v3.96/upx-3.96-win64.zip
+	unzip upx-3.96-win64
 clean:
 	rm minecraft_logs_analyzer.exe
