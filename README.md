@@ -64,3 +64,8 @@ If you use the .exe file you might get a false positive with virus programs. I u
 #### Authors:
 - Hawkpath (hawkpathas@gmail.com)
 - Quinten (tintin10q@hotmail.com)
+
+#### Contributors
+
+- @Phanabani Phanabani Phana
+- @kwak0 kwak0
