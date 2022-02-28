@@ -44,6 +44,9 @@ You can export the results into 2 ways
 - A graph with hours per month
 - A csv file with hours per session
 
+## False positives
+If you use the .exe file you might get a false positive with virus programs. I used pyinstaller to create a .exe from the .pyw file. I used this command to build the .exe 
+
 This next part is only for those who use the .pyw version
 ---
 At least python 3.6 is required for this program to work it might work on python 3.5, but I have not tested that.
@@ -58,14 +61,11 @@ If that does not work try to reinstall python and make sure to click the install
 The program will also detect if you do not have matplotlib installed, and it will ask you if you want to auto install.
 This will basically run `os.system("pip install --user matplotlib")` this is the same as running `pip install --user matplotlib` in the cmd.
 
-### False positives
-If you use the .exe file you might get a false positive with virus programs. I used pyinstaller to create a .exe from the .pyw file. I used this command to build the .exe ``
-
-#### Authors:
+## Authors:
 - Hawkpath (hawkpathas@gmail.com)
 - Quinten (tintin10q@hotmail.com)
 
-#### Contributors
+### Contributors
 
 - @Phanabani Phanabani Phana
 - @kwak0 kwak0
