@@ -22,7 +22,7 @@ Separate multiple globs with pipes (vertical bar: | ). Make sure files don't ove
 Folders that start with period must be explicitly specified
 (AppData/Roaming/.*/logs)
 
-Glob-Example: To find all logs folders in all folders that start with . in AppData,
+> **Glob-Example:** To find all logs folders in all folders that start with . in AppData,
 `C:/Users/USER/AppData/Roaming/.*/**`
 This would select all the logs in .minecraft but also in .technic for example.
 
