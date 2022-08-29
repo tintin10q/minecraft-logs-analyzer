@@ -51,7 +51,7 @@ If you use the .exe file you might get a false positive with virus programs. I u
 pyinstaller --clean --icon=icon.ico --onefile --splash=splash.png minecraft_logs_analyzer.pyw
 ```
 
-There is also a [MAKEFILE](./MAKEFILE) included so you can just use that to build your own .exe if you don't trust mine but you have to install [pyinstaller](https://pypi.org/project/pyinstaller/) with `pip install --user pyinstaller`.
+There is also a [Makefile](./Makefile) included so you can just use that to build your own .exe if you don't trust mine but you have to install [pyinstaller](https://pypi.org/project/pyinstaller/) with `pip install --user pyinstaller`.
 
 This next part is only for those who use the .pyw version
 
