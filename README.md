@@ -45,10 +45,18 @@ You can export the results into 2 ways
 - A csv file with hours per session
 
 ## False positives
-If you use the .exe file you might get a false positive with virus programs. I used pyinstaller to create a .exe from the .pyw file. I used this command to build the .exe 
+If you use the .exe file you might get a false positive with virus programs. I used pyinstaller to create a .exe from the .pyw file. I used this command to build the .exe: 
+
+```
+pyinstaller --clean --icon=icon.ico --onefile --splash=splash.png minecraft_logs_analyzer.pyw
+```
+
+There is also a MAKEFILE included so you can just use that to build your own .exe if you don't trust mine but you have to install [pyinstaller](https://pypi.org/project/pyinstaller/) with `pip install --user pyinstaller`.
 
 This next part is only for those who use the .pyw version
+
 ---
+
 At least python 3.6 is required for this program to work it might work on python 3.5, but I have not tested that.
 
 (I now added python 3.7 and 3.8 support)
