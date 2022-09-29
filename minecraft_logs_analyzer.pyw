@@ -129,7 +129,7 @@ def iter_logs(path):
 			continue
 		elif not file.name.startswith('20'):
 			continue
-		with open_methods[file.suffix](file, 'rt', encoding='ansi', errors='replace', newline='') as f:
+		with open_methods[file.suffix](file, 'rt', encoding='utf-8', errors='replace', newline='') as f:
 			yield f
 
 
@@ -474,7 +474,7 @@ if __name__ == '__main__':
 	stopButton = Button(frame, text="Stop scanning", command=exit, width=20, bg=background_color, fg=fg_color, font="Helvetica 10")
 	stopButton.pack()
 	
-	if os.path.exists("icon.ico"):
+	if os.path.exists("icon.ico") and platform != "linux" and platform != "linux2":
 		root.iconbitmap("icon.ico")
 	else:
 		print("Could not find icon.ico so using default tkinter icon")
