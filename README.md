@@ -69,6 +69,9 @@ If that does not work try to reinstall python and make sure to click the install
 The program will also detect if you do not have matplotlib installed, and it will ask you if you want to auto install.
 This will basically run `os.system("pip install --user matplotlib")` this is the same as running `pip install --user matplotlib` in the cmd.
 
+## Running on linux
+Linux support seems to be WIP but you should just be able to run `python3 minecraft_logs_analyzer.pyw` and manually specify the minecraft logs path if you have to. Make sure to install the dependencies with pip `python3 -m pip install matplotlib`
+
 ## Authors:
 - Hawkpath (hawkpathas@gmail.com)
 - Quinten (tintin10q@hotmail.com)
