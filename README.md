@@ -64,6 +64,8 @@ At least python 3.6 is required for this program to work it might work on python
 
 (I now added python 3.7 and 3.8 support)
 
+It also seems to work fine with python 3.10.
+
 This program uses matplotlib pyplot to create graphs. If you do not have matplotlib installed please install it by entering the flowing command into the cmd:
 `pip install --user matplotlib`
 
