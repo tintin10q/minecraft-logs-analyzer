@@ -9,11 +9,13 @@ from glob import iglob
 from io import TextIOBase, SEEK_END
 from pathlib import Path
 from sys import platform
-from tkinter import Tk, Entry, Button, StringVar, Frame, IntVar, Message, messagebox, END, filedialog
+from tkinter import Tk, Entry, Button, StringVar, Frame, IntVar, Message, messagebox, END, filedialog, PhotoImage
 from tkinter.colorchooser import *
 
 re._pattern_type = re.Pattern
 from _thread import start_new_thread
+
+time_pattern = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})', re.I)
 
 try:
 	import pyi_splash
@@ -104,7 +106,11 @@ def read_last_line(stream):
 	two = stream.readline()
 	if not two:  # Handle one line file case
 		return read_first_line(stream)
-	last_line = read_backward_until(stream, os.linesep, stop_after=2, trim_start=2)
+
+	stream.seek(0)
+	# First only read the last line and search for []
+	last_line = read_backward_until(stream, time_pattern, stop_after=1)
+
 	stream.seek(0)
 	return last_line
 
@@ -137,8 +143,6 @@ def count_playtime(path, count=-1, print_files='file'):
 	global graph_data_collection, stop_scan, total_data_time, data_total_play_time, csv_data
 	current_month = ""
 	total_data_time = 0
-	time_pattern = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})', re.I)
-	# time_pattern_simple = re.compile(r'\d{2}:\d{2}:\d{2}')
 	total_time = timedelta()
 	
 	for log in iter_logs(path):
@@ -318,7 +322,6 @@ def exit():
 	global stop_scan
 	stop_scan = True
 	insert("Stopping scan...")
-	return
 
 
 def create_graph():
@@ -340,7 +343,7 @@ def create_graph():
 		plt.draw()
 		plt.show()
 	except Exception as E:
-		insert(f"An error ocured while creating the graph: ({E})")
+		insert(f"An error occurred while creating the graph: ({E})")
 		insert("Try closing and opening the program\nMake sure that you have matplotlib installed!")
 
 
@@ -352,7 +355,7 @@ def module_not_found():
 	try:
 		from matplotlib import pyplot as plt
 		
-		insert("Succesfully installed matplotlib!")
+		insert("Successfully installed matplotlib!")
 	except ModuleNotFoundError:
 		insert("matplotlib can still not be imported")
 	except Exception as error:
@@ -389,7 +392,7 @@ if __name__ == '__main__':
 	fg_color = "white"
 	csv_data = {}
 	root = Tk()
-	
+
 	graph_data_collection = {}
 	stop_scan = False
 	try:
@@ -397,30 +400,30 @@ if __name__ == '__main__':
 	except ImportError:
 		plt = 0
 		start_new_thread(module_not_found, ())
-	
+
 	# here the gui stuff starts
 	frame = Frame(root, bg=background_color)
 	frame.pack()
-	
+
 	root.title("Playtime calculator - By Quinten Cabo")
 	root.config(bg=background_color)
-	
+
 	# mode selection
 	modeText = Message(frame, text="Choose scan mode:", bg=background_color, fg=fg_color, relief="groove", font="Helvetica 10")
 	modeText.config(width=120)
 	modeText.pack()
-	
+
 	mode_dict = {
 		1: "Automatic",
 		2: "Manual path",
 		3: "Glob"
 	}
-	
+
 	s = ttk.Style()  # Creating style element
 	s.configure('Wild.TRadiobutton',  # First argument is the name of style. Needs to end with: .TRadiobutton
-	            background=background_color,  # Setting background to our specified color above
-	            foreground=fg_color, font="Helvetica 10")  # You can define colors like this also
-	
+				background=background_color,  # Setting background to our specified color above
+				foreground=fg_color, font="Helvetica 10")  # You can define colors like this also
+
 	mode = IntVar(None, 1)
 	mode1 = ttk.Radiobutton(frame, variable=mode, text="Automatic    ", value=1, command=change_mode, cursor="hand2", style='Wild.TRadiobutton')
 	mode1.pack()
@@ -429,56 +432,57 @@ if __name__ == '__main__':
 	mode3 = ttk.Radiobutton(frame, variable=mode, text="Enter glob    ", value=3, command=change_mode, cursor="hand2", style='Wild.TRadiobutton')
 	mode3.pack()
 	scan_mode = mode.get()
-	
+
 	Message(frame, text="", bg="#23272A").pack()
-	
+
 	# Path input
 	pathText = Message(frame, text="(Sperate input with '|')\nEnter path(s)/glob:", bg=background_color, fg=fg_color, relief="groove", font="Helvetica 10")
 	pathText.config(width=130, justify="center")
 	pathText.pack()
-	
+
 	pathInput = StringVar()
 	pathInput = Entry(frame, exportselection=0, textvariable=pathInput, state="disabled", cursor="arrow", bg="white", width=40, disabledbackground=background_color, font="Helvetica 10")
 	pathInput.pack()
-	
+
 	Message(frame, text="", bg=background_color).pack()
-	
+
 	# run button
 	submitButton = Button(frame, text="Run", command=lambda: start_new_thread(run, tuple()), cursor="hand2", bg=background_color, fg=fg_color, font="Helvetica 10")
 	submitButton.config(width=20)
 	submitButton.pack()
-	
+
 	# graph button
 	graphButton = Button(frame, text="Create graph", command=create_graph, cursor="hand2", bg=background_color,
-	                     fg=fg_color, font="Helvetica 10")
+						 fg=fg_color, font="Helvetica 10")
 	graphButton.config(width=20)
 	graphButton.pack()
-	
+
 	graph_color = "#18aaff"
-	
+
 	colorButton = Button(frame, text='Select Color', command=getColor, bg=graph_color, font="Helvetica 10")
 	colorButton.config(width=20)
 	colorButton.pack()
-	
+
 	# csv button
 	graphButton = Button(frame, text="Export as csv", command=create_csv, cursor="hand2", bg=background_color, fg=fg_color, font="Helvetica 10")
 	graphButton.config(width=20)
 	graphButton.pack()
-	
+
 	# output
 	text = tkst.ScrolledText(frame, background="#2C2F33", fg="white", font="Helvetica 11")
 	text.config(width=120)
 	text.pack()
-	
+
 	# exit button
 	stopButton = Button(frame, text="Stop scanning", command=exit, width=20, bg=background_color, fg=fg_color, font="Helvetica 10")
 	stopButton.pack()
-	
-	if os.path.exists("icon.ico") and platform != "linux" and platform != "linux2":
-		root.iconbitmap("icon.ico")
+
+	if os.path.exists("icon.ico"):
+		img = PhotoImage(file='splash.png')
+		root.tk.call('wm', 'iconphoto', root._w, img)
 	else:
 		print("Could not find icon.ico so using default tkinter icon")
-	
+
 	# Close the splash screen. It does not matter when the call
 	# to this function is made, the splash screen remains open until
 	# this function is called or the Python program is terminated.
@@ -486,5 +490,5 @@ if __name__ == '__main__':
 		pyi_splash.close()
 	except Exception:
 		pass
-	
+
 	root.mainloop()
